@@ -1,7 +1,5 @@
 #!/usr/bin/python3
-import os
-import sys
-import gguf
+import os, sys, gguf
 
 def read_tensors(path):
     reader = gguf.GGUFReader(path)
@@ -9,7 +7,6 @@ def read_tensors(path):
         if tensor.tensor_type == gguf.GGMLQuantizationType.F32:
             continue
         print(f"{str(tensor.tensor_type):32}: {tensor.name}")
-
 try:
     path = sys.argv[1]
     assert os.path.isfile(path), "Invalid path"
