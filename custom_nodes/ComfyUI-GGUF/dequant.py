@@ -1,8 +1,5 @@
-# (c) City96 || Apache-2.0 (apache.org/licenses/LICENSE-2.0)
-import gguf
-import torch
+import gguf, torch
 from tqdm import tqdm
-
 
 TORCH_COMPATIBLE_QTYPES = {None, gguf.GGMLQuantizationType.F32, gguf.GGMLQuantizationType.F16}
 
@@ -53,11 +50,9 @@ def split_block_dims(blocks, *args):
     dims = list(args) + [n_max - sum(args)]
     return torch.split(blocks, dims, dim=1)
 
-# Full weights #
 def dequantize_blocks_BF16(blocks, block_size, type_size, dtype=None):
     return (blocks.view(torch.int16).to(torch.int32) << 16).view(torch.float32)
 
-# Legacy Quants #
 def dequantize_blocks_Q8_0(blocks, block_size, type_size, dtype=None):
     d, x = split_block_dims(blocks, 2)
     d = d.view(torch.float16).to(dtype)
@@ -118,7 +113,6 @@ def dequantize_blocks_Q4_0(blocks, block_size, type_size, dtype=None):
     qs = (qs & 0x0F).reshape((n_blocks, -1)).to(torch.int8) - 8
     return (d * qs)
 
-# K Quants #
 QK_K = 256
 K_SCALE_SIZE = 12
 
