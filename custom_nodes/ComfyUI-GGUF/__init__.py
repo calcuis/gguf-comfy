@@ -1,4 +1,3 @@
-# only import if running as a custom node
 try:
     import comfy.utils
 except ImportError:
