@@ -1,19 +1,11 @@
-# (c) City96 || Apache-2.0 (apache.org/licenses/LICENSE-2.0)
-import torch
-import gguf
-import copy
-import logging
-
+import torch, copy, logging, gguf, folder_paths
 import comfy.sd
 import comfy.utils
 import comfy.model_management
 import comfy.model_patcher
-import folder_paths
-
 from .ops import GGMLTensor, GGMLOps, move_patch_to_device
 from .dequant import is_quantized, is_torch_compatible
 
-# Add a custom keys for files ending in .gguf
 if "unet_gguf" not in folder_paths.folder_names_and_paths:
     orig = folder_paths.folder_names_and_paths.get("diffusion_models", folder_paths.folder_names_and_paths.get("unet", [[], set()]))
     folder_paths.folder_names_and_paths["unet_gguf"] = (orig[0], {".gguf"})
@@ -37,8 +29,6 @@ def gguf_sd_loader(path, handle_prefix="model.diffusion_model."):
     Read state dict as fake tensors
     """
     reader = gguf.GGUFReader(path)
-
-    # filter and strip prefix
     has_prefix = False
     if handle_prefix is not None:
         prefix_len = len(handle_prefix)
@@ -54,7 +44,6 @@ def gguf_sd_loader(path, handle_prefix="model.diffusion_model."):
             sd_key = tensor_name[prefix_len:]
         tensors.append((sd_key, tensor))
 
-    # detect and verify architecture
     compat = None
     arch_str = None
     arch_field = reader.get_field("general.architecture")
@@ -70,7 +59,6 @@ def gguf_sd_loader(path, handle_prefix="model.diffusion_model."):
         arch_str = detect_arch(set(val[0] for val in tensors)).arch
         compat = "sd.cpp"
 
-    # main loading loop
     state_dict = {}
     qtype_dict = {}
     for sd_key, tensor in tensors:
@@ -87,20 +75,17 @@ def gguf_sd_loader(path, handle_prefix="model.diffusion_model."):
                     while len(shape) > 2 and shape[-1] == 1:
                         shape = shape[:-1]
 
-        # add to state dict
         if tensor.tensor_type in {gguf.GGMLQuantizationType.F32, gguf.GGMLQuantizationType.F16}:
             torch_tensor = torch_tensor.view(*shape)
         state_dict[sd_key] = GGMLTensor(torch_tensor, tensor_type=tensor.tensor_type, tensor_shape=shape)
         qtype_dict[tensor_type_str] = qtype_dict.get(tensor_type_str, 0) + 1
 
-    # sanity check debug print
     print("\nggml_sd_loader:")
     for k,v in qtype_dict.items():
         print(f" {k:30}{v:3}")
 
     return state_dict
 
-# for remapping llama.cpp -> original key names
 clip_sd_map = {
     "enc.": "encoder.",
     ".blk.": ".block.",
@@ -182,10 +167,8 @@ class GGUFModelPatcher(comfy.model_patcher.ModelPatcher):
 
     mmap_released = False
     def load(self, *args, force_patch_weights=False, **kwargs):
-        # always call `patch_weight_to_device` even for lowvram
         super().load(*args, force_patch_weights=True, **kwargs)
 
-        # make sure nothing stays linked to mmap after first load
         if not self.mmap_released:
             linked = []
             if kwargs.get("lowvram_model_memory", 0) > 0:
@@ -213,7 +196,6 @@ class GGUFModelPatcher(comfy.model_patcher.ModelPatcher):
         for k in self.patches:
             n.patches[k] = self.patches[k][:]
         n.patches_uuid = self.patches_uuid
-
         n.object_patches = self.object_patches.copy()
         n.model_options = copy.deepcopy(self.model_options)
         n.backup = self.backup
@@ -245,7 +227,6 @@ class UnetLoaderGGUF:
             ops.Linear.dequant_dtype = dequant_dtype
         else:
             ops.Linear.dequant_dtype = getattr(torch, dequant_dtype)
-
         if patch_dtype in ("default", None):
             ops.Linear.patch_dtype = None
         elif patch_dtype in ["target"]:
@@ -253,7 +234,6 @@ class UnetLoaderGGUF:
         else:
             ops.Linear.patch_dtype = getattr(torch, patch_dtype)
 
-        # init model
         unet_path = folder_paths.get_full_path("unet", unet_name)
         sd = gguf_sd_loader(unet_path)
         model = comfy.sd.load_diffusion_model_state_dict(
@@ -335,14 +315,12 @@ class CLIPLoaderGGUF:
         )
         clip.patcher = GGUFModelPatcher.clone(clip.patcher)
 
-        # for some reason this is just missing in some SAI checkpoints
         if getattr(clip.cond_stage_model, "clip_l", None) is not None:
             if getattr(clip.cond_stage_model.clip_l.transformer.text_projection.weight, "tensor_shape", None) is None:
                 clip.cond_stage_model.clip_l.transformer.text_projection = comfy.ops.manual_cast.Linear(768, 768)
         if getattr(clip.cond_stage_model, "clip_g", None) is not None:
             if getattr(clip.cond_stage_model.clip_g.transformer.text_projection.weight, "tensor_shape", None) is None:
                 clip.cond_stage_model.clip_g.transformer.text_projection = comfy.ops.manual_cast.Linear(1280, 1280)
-
         return clip
 
     def load_clip(self, clip_name, type="stable_diffusion"):
@@ -382,7 +360,6 @@ class TripleCLIPLoaderGGUF(CLIPLoaderGGUF):
                 "clip_name3": file_options,
             }
         }
-
     TITLE = "TripleCLIPLoader (GGUF)"
 
     def load_clip(self, clip_name1, clip_name2, clip_name3, type="sd3"):
