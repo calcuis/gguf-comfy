@@ -1,15 +1,13 @@
 from PIL import Image, ImageOps
 from io import BytesIO
 import numpy as np
-import struct
+import struct, time
 import comfy.utils
-import time
 
 #You can use this node to save full size images through the websocket, the
 #images will be sent in exactly the same format as the image previews: as
 #binary images on the websocket with a 8 byte header indicating the type
 #of binary message (first 4 bytes) and the image format (next 4 bytes).
-
 #Note that no metadata will be put in the images saved with this node.
 
 class SaveImageWebsocket:
