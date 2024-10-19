@@ -1,7 +1,4 @@
-# (c) City96 || Apache-2.0 (apache.org/licenses/LICENSE-2.0)
-import gguf
-import torch
-
+import gguf, torch
 import comfy.ops
 import comfy.model_management
 from .dequant import dequantize_tensor, is_quantized
@@ -33,14 +30,12 @@ class GGMLTensor(torch.Tensor):
         return self
 
     def copy_(self, *args, **kwargs):
-        # fixes .weight.copy_ in comfy/clip_model/CLIPTextModel
         try:
             return super().copy_(*args, **kwargs)
         except Exception as e:
             print(f"ignoring 'copy_' on tensor: {e}")
 
     def __deepcopy__(self, *args, **kwargs):
-        # Intel Arc fix, ref#50
         new = super().__deepcopy__(*args, **kwargs)
         new.tensor_type = getattr(self, "tensor_type", None)
         new.tensor_shape = getattr(self, "tensor_shape", new.data.shape)
@@ -71,7 +66,6 @@ class GGMLLayer(torch.nn.Module):
 
     def _load_from_state_dict(self, state_dict, prefix, *args, **kwargs):
         weight, bias = state_dict.get(f"{prefix}weight"), state_dict.get(f"{prefix}bias")
-        # NOTE: using modified load for linear due to not initializing on creation, see GGMLOps todo 
         if self.is_ggml_quantized(weight=weight, bias=bias) or isinstance(self, torch.nn.Linear):
             return self.ggml_load_from_state_dict(state_dict, prefix, *args, **kwargs)
         return super()._load_from_state_dict(state_dict, prefix, *args, **kwargs)
@@ -92,7 +86,6 @@ class GGMLLayer(torch.nn.Module):
         return super()._save_to_state_dict(*args, **kwargs)
 
     def ggml_save_to_state_dict(self, destination, prefix, keep_vars):
-        # This is a fake state dict for vram estimation
         weight = torch.zeros_like(self.weight, device=torch.device("meta"))
         destination[prefix + "weight"] = weight
         if self.bias is not None:
@@ -100,7 +93,6 @@ class GGMLLayer(torch.nn.Module):
             destination[prefix + "bias"] = bias
         return
 
-        # This would return the actual state dict
         destination[prefix + "weight"] = self.get_weight(self.weight)
         if bias is not None:
             destination[prefix + "bias"] = self.get_weight(self.bias)
@@ -109,16 +101,13 @@ class GGMLLayer(torch.nn.Module):
         if tensor is None:
             return
 
-        # consolidate and load patches to GPU in async
         patch_list = []
         device = tensor.device
         for function, patches, key in getattr(tensor, "patches", []):
             patch_list += move_patch_to_device(patches, device)
 
-        # dequantize tensor while patches load
         weight = dequantize_tensor(tensor, dtype, self.dequant_dtype)
 
-        # apply patches
         if patch_list:
             if self.patch_dtype is None:
                 weight = function(patch_list, weight, key)
