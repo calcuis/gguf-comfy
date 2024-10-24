@@ -21,6 +21,7 @@ index 5ab65ea9..35580d9d 100644
      LLM_ARCH_EXAONE,
 +    LLM_ARCH_FLUX,
 +    LLM_ARCH_SD1,
++    LLM_ARCH_SD3,
 +    LLM_ARCH_SDXL,
      LLM_ARCH_UNKNOWN,
  };
@@ -31,6 +32,7 @@ index 5ab65ea9..35580d9d 100644
      { LLM_ARCH_EXAONE,          "exaone"       },
 +    { LLM_ARCH_FLUX,            "flux"         },
 +    { LLM_ARCH_SD1,             "sd1"          },
++    { LLM_ARCH_SD3,             "sd3"          },
 +    { LLM_ARCH_SDXL,            "sdxl"         },
      { LLM_ARCH_UNKNOWN,         "(unknown)"    },
  };
