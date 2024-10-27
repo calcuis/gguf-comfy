@@ -1,6 +1,6 @@
 {
-  "last_node_id": 304,
-  "last_link_id": 607,
+  "last_node_id": 305,
+  "last_link_id": 608,
   "nodes": [
     {
       "id": 13,
@@ -129,10 +129,10 @@
         "0": -218,
         "1": -619
       },
-      "size": [
-        365.927108085044,
-        379.9876916093295
-      ],
+      "size": {
+        "0": 365.9270935058594,
+        "1": 379.9877014160156
+      },
       "flags": {},
       "order": 12,
       "mode": 0,
@@ -173,7 +173,7 @@
         "Node name for S&R": "KSampler"
       },
       "widgets_values": [
-        800378156346713,
+        990577942428195,
         "randomize",
         40,
         4.5,
@@ -213,7 +213,7 @@
           "name": "IMAGE",
           "type": "IMAGE",
           "links": [
-            274
+            608
           ],
           "slot_index": 0,
           "shape": 3
@@ -312,10 +312,10 @@
         "0": -672,
         "1": -20
       },
-      "size": [
-        464.1728323404152,
-        147.51009160932927
-      ],
+      "size": {
+        "0": 464.1728210449219,
+        "1": 147.5100860595703
+      },
       "flags": {},
       "order": 7,
       "mode": 0,
@@ -354,10 +354,10 @@
         "0": -661,
         "1": -273
       },
-      "size": [
-        426.3492944681003,
-        204.1381537370147
-      ],
+      "size": {
+        "0": 426.34930419921875,
+        "1": 204.13815307617188
+      },
       "flags": {},
       "order": 6,
       "mode": 0,
@@ -389,50 +389,18 @@
       "bgcolor": "#353"
     },
     {
-      "id": 301,
-      "type": "UnetLoaderGGUF",
-      "pos": {
-        "0": -971,
-        "1": -595
-      },
-      "size": [
-        372.8216497873143,
-        77.22304937528997
-      ],
-      "flags": {},
-      "order": 0,
-      "mode": 0,
-      "inputs": [],
-      "outputs": [
-        {
-          "name": "MODEL",
-          "type": "MODEL",
-          "links": [
-            606
-          ],
-          "slot_index": 0
-        }
-      ],
-      "properties": {
-        "Node name for S&R": "UnetLoaderGGUF"
-      },
-      "widgets_values": [
-        "sd3.5_large-q4_0.gguf"
-      ]
-    },
-    {
       "id": 135,
       "type": "EmptySD3LatentImage",
       "pos": {
         "0": -770,
         "1": -456
       },
-      "size": [
-        294.3804497873143,
-        114.79912267317201
-      ],
+      "size": {
+        "0": 294.3804626464844,
+        "1": 114.79912567138672
+      },
       "flags": {},
-      "order": 1,
+      "order": 0,
       "mode": 0,
       "inputs": [],
       "outputs": [
@@ -456,43 +424,77 @@
       ]
     },
     {
-      "id": 105,
-      "type": "Note",
+      "id": 301,
+      "type": "UnetLoaderGGUF",
       "pos": {
-        "0": -992,
-        "1": -455
+        "0": -971,
+        "1": -595
       },
-      "size": [
-        210,
-        107.46866054548667
-      ],
+      "size": {
+        "0": 372.8216552734375,
+        "1": 77.22305297851562
+      },
       "flags": {},
-      "order": 2,
+      "order": 1,
       "mode": 0,
       "inputs": [],
-      "outputs": [],
+      "outputs": [
+        {
+          "name": "MODEL",
+          "type": "MODEL",
+          "links": [
+            606
+          ],
+          "slot_index": 0
+        }
+      ],
       "properties": {
-        "text": ""
+        "Node name for S&R": "UnetLoaderGGUF"
       },
       "widgets_values": [
-        "Make sure the resolution is multiple of 64 pixels and adds up to around 1 megapixel. "
+        "sd3.5_large-q4_0.gguf"
+      ]
+    },
+    {
+      "id": 305,
+      "type": "SaveImage",
+      "pos": {
+        "0": 168,
+        "1": -622
+      },
+      "size": [
+        785.153628413696,
+        834.0581432696534
       ],
-      "color": "#432",
-      "bgcolor": "#653"
+      "flags": {},
+      "order": 14,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "images",
+          "type": "IMAGE",
+          "link": 608
+        }
+      ],
+      "outputs": [],
+      "properties": {},
+      "widgets_values": [
+        "ComfyUI"
+      ]
     },
     {
       "id": 11,
       "type": "TripleCLIPLoader",
       "pos": {
-        "0": -997,
-        "1": -288
+        "0": -990,
+        "1": -287
       },
       "size": {
         "0": 315,
         "1": 106
       },
       "flags": {},
-      "order": 3,
+      "order": 2,
       "mode": 0,
       "inputs": [],
       "outputs": [
@@ -517,11 +519,36 @@
       ]
     },
     {
+      "id": 105,
+      "type": "Note",
+      "pos": {
+        "0": -985,
+        "1": -456
+      },
+      "size": {
+        "0": 210,
+        "1": 107.46865844726562
+      },
+      "flags": {},
+      "order": 3,
+      "mode": 0,
+      "inputs": [],
+      "outputs": [],
+      "properties": {
+        "text": ""
+      },
+      "widgets_values": [
+        "Make sure the resolution is multiple of 64 pixels and adds up to around 1 megapixel. "
+      ],
+      "color": "#432",
+      "bgcolor": "#653"
+    },
+    {
       "id": 304,
       "type": "VAELoader",
       "pos": {
-        "0": -992,
-        "1": -119
+        "0": -988,
+        "1": -125
       },
       "size": {
         "0": 315,
@@ -547,33 +574,6 @@
       "widgets_values": [
         "diffusion_pytorch_model.safetensors"
       ]
-    },
-    {
-      "id": 50,
-      "type": "PreviewImage",
-      "pos": {
-        "0": 159,
-        "1": -607
-      },
-      "size": [
-        692.5237565957855,
-        719.1727338433683
-      ],
-      "flags": {},
-      "order": 14,
-      "mode": 0,
-      "inputs": [
-        {
-          "name": "images",
-          "type": "IMAGE",
-          "link": 274
-        }
-      ],
-      "outputs": [],
-      "properties": {
-        "Node name for S&R": "PreviewImage"
-      },
-      "widgets_values": []
     }
   ],
   "links": [
@@ -624,14 +624,6 @@
       71,
       0,
       "CLIP"
-    ],
-    [
-      274,
-      8,
-      0,
-      50,
-      0,
-      "IMAGE"
     ],
     [
       568,
@@ -696,16 +688,24 @@
       8,
       1,
       "VAE"
+    ],
+    [
+      608,
+      8,
+      0,
+      305,
+      0,
+      "IMAGE"
     ]
   ],
   "groups": [],
   "config": {},
   "extra": {
     "ds": {
-      "scale": 0.683013455365071,
+      "scale": 0.6830134553650706,
       "offset": [
-        1092.4585191488427,
-        664.7726040289458
+        997.027571586304,
+        700.9546703472902
       ]
     }
   },
