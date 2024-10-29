@@ -3,7 +3,7 @@ import os, sys
 from gguf_connector import reader as gr
 
 def read_tensors(path):
-    reader = gguf.GGUFReader(path)
+    reader = gr.GGUFReader(path)
     for tensor in reader.tensors:
         if tensor.tensor_type == gr.GGMLQuantizationType.F32:
             continue
