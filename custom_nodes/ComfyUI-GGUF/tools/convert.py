@@ -1,16 +1,18 @@
-import os, torch, argparse, gguf
+import os, torch, argparse
 from tqdm import tqdm
 from safetensors.torch import load_file
+import gguf_connector as ggc
+from gguf_connector import writer as gw
 
 QUANTIZATION_THRESHOLD = 1024
 REARRANGE_THRESHOLD = 512
 MAX_TENSOR_NAME_LENGTH = 127
 
 class ModelTemplate:
-    arch = "invalid"  # string describing architecture
-    shape_fix = False # whether to reshape tensors
-    keys_detect = []  # list of lists to match in state dict
-    keys_banned = []  # list of keys that should mark model as invalid for conversion
+    arch = "invalid"
+    shape_fix = False
+    keys_detect = []
+    keys_banned = []
 
 class ModelFlux(ModelTemplate):
     arch = "flux"
@@ -36,7 +38,7 @@ class ModelSDXL(ModelTemplate):
         (
             "input_blocks.3.0.op.weight", "input_blocks.6.0.op.weight",
             "output_blocks.2.2.conv.weight", "output_blocks.5.2.conv.weight",
-        ), # Non-diffusers
+        ),
         ("label_emb.0.0.weight",),
     ]
 
@@ -48,14 +50,12 @@ class ModelSD1(ModelTemplate):
         (
             "input_blocks.3.0.op.weight", "input_blocks.6.0.op.weight", "input_blocks.9.0.op.weight",
             "output_blocks.2.1.conv.weight", "output_blocks.5.2.conv.weight", "output_blocks.8.2.conv.weight"
-        ), # Non-diffusers
+        ),
     ]
 
-# The architectures are checked in order and the first successful match terminates the search.
 arch_list = [ModelFlux, ModelSD3, ModelSDXL, ModelSD1]
 
 def is_model_arch(model, state_dict):
-    # check if model is correct
     matched = False
     invalid = False
     for match_list in model.keys_detect:
@@ -93,7 +93,6 @@ def load_state_dict(path):
     else:
         state_dict = load_file(path)
 
-    # only keep unet with no prefix!
     sd = {}
     has_prefix = any(["model.diffusion_model." in x for x in state_dict.keys()])
     for k, v in state_dict.items():
@@ -109,7 +108,7 @@ def load_model(path):
     state_dict = load_state_dict(path)
     model_arch = detect_arch(state_dict)
     print(f"* Architecture detected from input: {model_arch.arch}")
-    writer = gguf.GGUFWriter(path=None, arch=model_arch.arch)
+    writer = gw.GGUFWriter(path=None, arch=model_arch.arch)
     return (writer, state_dict, model_arch)
 
 def handle_tensors(args, writer, state_dict, model_arch):
@@ -129,7 +128,6 @@ def handle_tensors(args, writer, state_dict, model_arch):
 
         if data.dtype == torch.bfloat16:
             data = data.to(torch.float32).numpy()
-        # this is so we don't break torch 2.0.X
         elif data.dtype in [getattr(torch, "float8_e4m3fn", "_invalid"), getattr(torch, "float8_e5m2", "_invalid")]:
             data = data.to(torch.float16).numpy()
         else:
@@ -138,16 +136,14 @@ def handle_tensors(args, writer, state_dict, model_arch):
         n_dims = len(data.shape)
         data_shape = data.shape
         data_qtype = getattr(
-            gguf.GGMLQuantizationType,
+            gw.GGMLQuantizationType,
             "BF16" if old_dtype == torch.bfloat16 else "F16"
         )
 
-        # get number of parameters (AKA elements) in this tensor
         n_params = 1
         for dim_size in data_shape:
             n_params *= dim_size
 
-        # keys to keep as max precision
         blacklist = {
             "time_embedding.",
             "add_embedding.",
@@ -161,35 +157,32 @@ def handle_tensors(args, writer, state_dict, model_arch):
 
         if old_dtype in (torch.float32, torch.bfloat16):
             if n_dims == 1:
-                # one-dimensional tensors should be kept in F32
-                # also speeds up inference due to not dequantizing
-                data_qtype = gguf.GGMLQuantizationType.F32
+                data_qtype = gw.GGMLQuantizationType.F32
 
             elif n_params <= QUANTIZATION_THRESHOLD:
-                # very small tensors
-                data_qtype = gguf.GGMLQuantizationType.F32
+                data_qtype = gw.GGMLQuantizationType.F32
 
             elif ".weight" in key and any(x in key for x in blacklist):
-                data_qtype = gguf.GGMLQuantizationType.F32
+                data_qtype = gw.GGMLQuantizationType.F32
 
-        if (model_arch.shape_fix                        # NEVER reshape for models such as flux
-            and n_dims > 1                              # Skip one-dimensional tensors
-            and n_params >= REARRANGE_THRESHOLD         # Only rearrange tensors meeting the size requirement
-            and (n_params / 256).is_integer()           # Rearranging only makes sense if total elements is divisible by 256
-            and not (data.shape[-1] / 256).is_integer() # Only need to rearrange if the last dimension is not divisible by 256
+        if (model_arch.shape_fix
+            and n_dims > 1
+            and n_params >= REARRANGE_THRESHOLD
+            and (n_params / 256).is_integer()
+            and not (data.shape[-1] / 256).is_integer()
         ):
             orig_shape = data.shape
             data = data.reshape(n_params // 256, 256)
             writer.add_array(f"comfy.gguf.orig_shape.{key}", tuple(int(dim) for dim in orig_shape))
 
         try:
-            data = gguf.quants.quantize(data, data_qtype)
-        except (AttributeError, gguf.QuantError) as e:
+            data = ggc.quant.quantize(data, data_qtype)
+        except (AttributeError, ggc.quant.QuantError) as e:
             tqdm.write(f"falling back to F16: {e}")
-            data_qtype = gguf.GGMLQuantizationType.F16
-            data = gguf.quants.quantize(data, data_qtype)
+            data_qtype = gw.GGMLQuantizationType.F16
+            data = gw.quants.quantize(data, data_qtype)
 
-        new_name = key # do we need to rename?
+        new_name = key
 
         shape_str = f"{{{', '.join(str(n) for n in reversed(data.shape))}}}"
         tqdm.write(f"{f'%-{max_name_len + 4}s' % f'{new_name}'} {old_dtype} --> {data_qtype.name}, shape = {shape_str}")
@@ -201,13 +194,13 @@ if __name__ == "__main__":
     path = args.src
     writer, state_dict, model_arch = load_model(path)
 
-    writer.add_quantization_version(gguf.GGML_QUANT_VERSION)
+    writer.add_quantization_version(gw.GGML_QUANT_VERSION)
     if next(iter(state_dict.values())).dtype == torch.bfloat16:
-        out_path = f"{os.path.splitext(path)[0]}-BF16.gguf"
-        writer.add_file_type(gguf.LlamaFileType.MOSTLY_BF16)
+        out_path = f"{os.path.splitext(path)[0]}-bf16.gguf"
+        writer.add_file_type(gw.LlamaFileType.MOSTLY_BF16)
     else:
-        out_path = f"{os.path.splitext(path)[0]}-F16.gguf"
-        writer.add_file_type(gguf.LlamaFileType.MOSTLY_F16)
+        out_path = f"{os.path.splitext(path)[0]}-f16.gguf"
+        writer.add_file_type(gw.LlamaFileType.MOSTLY_F16)
 
     out_path = args.dst or out_path
     if os.path.isfile(out_path):
