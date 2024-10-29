@@ -1,10 +1,11 @@
 #!/usr/bin/python3
-import os, sys, gguf
+import os, sys
+from gguf_connector import reader as gr
 
 def read_tensors(path):
     reader = gguf.GGUFReader(path)
     for tensor in reader.tensors:
-        if tensor.tensor_type == gguf.GGMLQuantizationType.F32:
+        if tensor.tensor_type == gr.GGMLQuantizationType.F32:
             continue
         print(f"{str(tensor.tensor_type):32}: {tensor.name}")
 try:
