@@ -1,4 +1,12 @@
-### ComfyUI-gguf
+### gguf-comfy
+GGUF node for ComfyUI
+
+To work with this custom node: git clone this repository into your custom nodes folder (./ComfyUI/custom_nodes)
+```
+git clone https://github.com/calcuis/gguf-comfy
+```
+or you can get the compressed pack with mini-optimization (recommended for most of us; see below with an example usage)
+
 ![screenshot](gguf.png)
 
 Get the ComfyUI GGUF windows portable 7z:
