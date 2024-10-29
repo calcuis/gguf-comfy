@@ -1,7 +1,8 @@
-import gguf, torch
+import torch
 import comfy.ops
 import comfy.model_management
 from .dequant import dequantize_tensor, is_quantized
+from gguf_connector import reader as gr
 
 class GGMLTensor(torch.Tensor):
     """
@@ -55,7 +56,7 @@ class GGMLLayer(torch.nn.Module):
     comfy_cast_weights = True
     dequant_dtype = None
     patch_dtype = None
-    torch_compatible_tensor_types = {None, gguf.GGMLQuantizationType.F32, gguf.GGMLQuantizationType.F16}
+    torch_compatible_tensor_types = {None, gr.GGMLQuantizationType.F32, gr.GGMLQuantizationType.F16}
 
     def is_ggml_quantized(self, *, weight=None, bias=None):
         if weight is None:
@@ -112,7 +113,6 @@ class GGMLLayer(torch.nn.Module):
             if self.patch_dtype is None:
                 weight = function(patch_list, weight, key)
             else:
-                # for testing, may degrade image quality
                 patch_dtype = dtype if self.patch_dtype == "target" else self.patch_dtype
                 weight = function(patch_list, weight, key, patch_dtype)
         return weight
@@ -151,9 +151,6 @@ class GGMLOps(comfy.ops.manual_cast):
     class Linear(GGMLLayer, comfy.ops.manual_cast.Linear):
         def __init__(self, in_features, out_features, bias=True, device=None, dtype=None):
             torch.nn.Module.__init__(self)
-            # TODO: better workaround for reserved memory spike on windows
-            # Issue is with `torch.empty` still reserving the full memory for the layer
-            # Windows doesn't over-commit memory so without this 24GB+ of pagefile is used
             self.in_features = in_features
             self.out_features = out_features
             self.weight = None
