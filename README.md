@@ -5,7 +5,7 @@ To work with this custom node: git clone this repository into your custom nodes 
 ```
 git clone https://github.com/calcuis/gguf-comfy
 ```
-or you can get the compressed pack with mini-optimization (recommended for most of us; see below with an example usage)
+or you can get the compressed pack with mini-optimization (recommended for most of us; see below with example)
 
 ![screenshot](gguf.png)
 
