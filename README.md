@@ -1,7 +1,7 @@
 ### gguf-comfy
 GGUF node for ComfyUI
 
-To work with this custom node: git clone this repository and replace your custom nodes folder (./ComfyUI/custom_nodes)
+To work with this custom node: git clone this repository, replace your custom nodes folder (./ComfyUI/custom_nodes)
 ```
 git clone https://github.com/calcuis/gguf-comfy
 ```
