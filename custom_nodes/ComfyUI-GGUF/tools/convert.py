@@ -1,4 +1,5 @@
-import os, torch, argparse
+import torch
+import os, argparse
 from tqdm import tqdm
 from safetensors.torch import load_file
 import gguf_connector as ggc
