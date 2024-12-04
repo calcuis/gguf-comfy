@@ -187,15 +187,11 @@ class GGUFModelPatcher(comfy.model_patcher.ModelPatcher):
             self.mmap_released = True
 
     def clone(self, *args, **kwargs):
-        n = GGUFModelPatcher(self.model, self.load_device, self.offload_device, self.size, weight_inplace_update=self.weight_inplace_update)
-        n.patches = {}
-        for k in self.patches:
-            n.patches[k] = self.patches[k][:]
-        n.patches_uuid = self.patches_uuid
-        n.object_patches = self.object_patches.copy()
-        n.model_options = copy.deepcopy(self.model_options)
-        n.backup = self.backup
-        n.object_patches_backup = self.object_patches_backup
+        src_cls = self.__class__
+        self.__class__ = GGUFModelPatcher
+        n = super().clone(*args, **kwargs)
+        n.__class__ = GGUFModelPatcher
+        self.__class__ = src_cls
         n.patch_on_device = getattr(self, "patch_on_device", False)
         return n
 
@@ -313,14 +309,12 @@ class CLIPLoaderGGUF:
             embedding_directory = folder_paths.get_folder_paths("embeddings"),
         )
         clip.patcher = GGUFModelPatcher.clone(clip.patcher)
-
         if getattr(clip.cond_stage_model, "clip_l", None) is not None:
             if getattr(clip.cond_stage_model.clip_l.transformer.text_projection.weight, "tensor_shape", None) is None:
                 clip.cond_stage_model.clip_l.transformer.text_projection = comfy.ops.manual_cast.Linear(768, 768)
         if getattr(clip.cond_stage_model, "clip_g", None) is not None:
             if getattr(clip.cond_stage_model.clip_g.transformer.text_projection.weight, "tensor_shape", None) is None:
                 clip.cond_stage_model.clip_g.transformer.text_projection = comfy.ops.manual_cast.Linear(1280, 1280)
-
         return clip
 
     def load_clip(self, clip_name, type="stable_diffusion"):
