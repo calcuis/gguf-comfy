@@ -108,6 +108,7 @@ class GGMLLayer(torch.nn.Module):
             patch_list += move_patch_to_device(patches, device)
 
         weight = dequantize_tensor(tensor, dtype, self.dequant_dtype)
+        weight.__class__ = torch.Tensor
 
         if patch_list:
             if self.patch_dtype is None:
