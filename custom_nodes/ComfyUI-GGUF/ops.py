@@ -110,7 +110,9 @@ class GGMLLayer(torch.nn.Module):
             patch_list += move_patch_to_device(patches, device)
 
         weight = dequantize_tensor(tensor, dtype, self.dequant_dtype)
-        weight.__class__ = torch.Tensor
+
+        if isinstance(weight, GGMLTensor):
+            weight.__class__ = torch.Tensor
 
         if patch_list:
             if self.patch_dtype is None:
@@ -141,8 +143,13 @@ class GGMLLayer(torch.nn.Module):
 
     def forward_comfy_cast_weights(self, input, *args, **kwargs):
         if self.is_ggml_quantized():
-            return self.forward_ggml_cast_weights(input, *args, **kwargs)
-        return super().forward_comfy_cast_weights(input, *args, **kwargs)
+            out = self.forward_ggml_cast_weights(input, *args, **kwargs)
+        else:
+            out = super().forward_comfy_cast_weights(input, *args, **kwargs)
+
+        if isinstance(out, GGMLTensor):
+            out.__class__ = torch.Tensor
+        return out
 
     def forward_ggml_cast_weights(self, input):
         raise NotImplementedError
