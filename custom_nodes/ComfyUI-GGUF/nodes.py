@@ -69,7 +69,6 @@ def gguf_sd_loader(path, handle_prefix="model.diffusion_model.", return_arch=Fal
         tensor_name = tensor.name
         tensor_type_str = str(tensor.tensor_type)
         torch_tensor = torch.from_numpy(tensor.data)
-        # shape = gguf_sd_loader_get_orig_shape(reader, tensor_name)
         shape = get_orig_shape(reader, tensor_name)
         if shape is None:
             shape = torch.Size(tuple(int(v) for v in reversed(tensor.shape)))
@@ -86,7 +85,7 @@ def gguf_sd_loader(path, handle_prefix="model.diffusion_model.", return_arch=Fal
     print("\nggml_sd_loader:")
     for k,v in qtype_dict.items():
         print(f" {k:30}{v:3}")
-    # return state_dict
+
     if return_arch:
         return (state_dict, arch_str)
     return state_dict
