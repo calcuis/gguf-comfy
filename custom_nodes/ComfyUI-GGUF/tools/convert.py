@@ -218,13 +218,13 @@ if __name__ == "__main__":
     path = args.src
     writer, state_dict, model_arch = load_model(path)
 
-    writer.add_quantization_version(gw.GGML_QUANT_VERSION)
+    writer.add_quantization_version(ggc.const.GGML_QUANT_VERSION)
     if next(iter(state_dict.values())).dtype == torch.bfloat16:
         out_path = f"{os.path.splitext(path)[0]}-bf16.gguf"
-        writer.add_file_type(gw.LlamaFileType.MOSTLY_BF16)
+        writer.add_file_type(ggc.const.LlamaFileType.MOSTLY_BF16)
     else:
         out_path = f"{os.path.splitext(path)[0]}-f16.gguf"
-        writer.add_file_type(gw.LlamaFileType.MOSTLY_F16)
+        writer.add_file_type(ggc.const.LlamaFileType.MOSTLY_F16)
 
     out_path = args.dst or out_path
     if os.path.isfile(out_path):
