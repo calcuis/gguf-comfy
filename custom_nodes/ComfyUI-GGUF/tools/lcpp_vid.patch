@@ -66,7 +66,7 @@ index 24e1f1f0..aeccc173 100644
 +    { LLM_ARCH_SD3,             "sd3"          },
 +    { LLM_ARCH_AURA,            "aura"         },
 +    { LLM_ARCH_LTXV,            "ltxv"         },
-+    { LLM_ARCH_HYVID,           "HYVID"        },
++    { LLM_ARCH_HYVID,           "hyvid"        },
      { LLM_ARCH_UNKNOWN,         "(unknown)"    },
  };
  
