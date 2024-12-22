@@ -123,7 +123,7 @@ index 24e1f1f0..aeccc173 100644
 +
 +    if ( // Rules for to_v attention
 +            (name.find("attn_v.weight") != std::string::npos) ||
-+            (name.find(".to_v.weight") != std::string::npos) || 
++            (name.find(".to_v.weight") != std::string::npos) ||
 +            (name.find(".attn.w1v.weight") != std::string::npos) ||
 +            (name.find(".attn.w2v.weight") != std::string::npos)
 +        ){
