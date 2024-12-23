@@ -82,6 +82,11 @@ def gguf_sd_loader(path, handle_prefix="model.diffusion_model.", return_arch=Fal
         state_dict[sd_key] = GGMLTensor(torch_tensor, tensor_type=tensor.tensor_type, tensor_shape=shape)
         qtype_dict[tensor_type_str] = qtype_dict.get(tensor_type_str, 0) + 1
 
+    qsd = {k:v for k,v in state_dict.items() if is_quantized(v)}
+    if len(qsd) > 0:
+        max_key = max(qsd.keys(), key=lambda k: qsd[k].numel())
+        state_dict[max_key].is_largest_weight = True
+
     print("\nggml_sd_loader:")
     for k,v in qtype_dict.items():
         print(f" {k:30}{v:3}")
@@ -359,12 +364,6 @@ class CLIPLoaderGGUF:
             embedding_directory = folder_paths.get_folder_paths("embeddings"),
         )
         clip.patcher = GGUFModelPatcher.clone(clip.patcher)
-        if getattr(clip.cond_stage_model, "clip_l", None) is not None:
-            if getattr(clip.cond_stage_model.clip_l.transformer.text_projection.weight, "tensor_shape", None) is None:
-                clip.cond_stage_model.clip_l.transformer.text_projection = comfy.ops.manual_cast.Linear(768, 768)
-        if getattr(clip.cond_stage_model, "clip_g", None) is not None:
-            if getattr(clip.cond_stage_model.clip_g.transformer.text_projection.weight, "tensor_shape", None) is None:
-                clip.cond_stage_model.clip_g.transformer.text_projection = comfy.ops.manual_cast.Linear(1280, 1280)
         return clip
 
     def load_clip(self, clip_name, type="stable_diffusion"):
