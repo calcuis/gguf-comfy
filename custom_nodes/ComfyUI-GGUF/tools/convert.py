@@ -204,7 +204,7 @@ def handle_tensors(args, writer, state_dict, model_arch):
         except (AttributeError, ggc.quant.QuantError) as e:
             tqdm.write(f"falling back to F16: {e}")
             data_qtype = gw.GGMLQuantizationType.F16
-            data = gw.quants.quantize(data, data_qtype)
+            data = ggc.quant.quantize(data, data_qtype)
 
         new_name = key
 
