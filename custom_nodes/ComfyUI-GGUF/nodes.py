@@ -8,13 +8,19 @@ from .ops import GGMLTensor, GGMLOps, move_patch_to_device
 from .dequant import is_quantized, is_torch_compatible
 from gguf_connector import reader as gr
 
-if "unet_gguf" not in folder_paths.folder_names_and_paths:
-    orig = folder_paths.folder_names_and_paths.get("diffusion_models", folder_paths.folder_names_and_paths.get("unet", [[], set()]))
-    folder_paths.folder_names_and_paths["unet_gguf"] = (orig[0], {".gguf"})
+def update_folder_names_and_paths(key, targets=[]):
+    # check for existing key
+    base = folder_paths.folder_names_and_paths.get(key, ([], {}))
+    base = base[0] if isinstance(base[0], (list, set, tuple)) else []
+    # find base key & add w/ fallback, sanity check + warning
+    target = next((x for x in targets if x in folder_paths.folder_names_and_paths), targets[0])
+    orig, _ = folder_paths.folder_names_and_paths.get(target, ([], {}))
+    folder_paths.folder_names_and_paths[key] = (orig or base, {".gguf"})
+    if base and base != orig:
+        logging.warning(f"Unknown file list already present on key {key}: {base}")
 
-if "clip_gguf" not in folder_paths.folder_names_and_paths:
-    orig = folder_paths.folder_names_and_paths.get("text_encoders", folder_paths.folder_names_and_paths.get("clip", [[], set()]))
-    folder_paths.folder_names_and_paths["clip_gguf"] = (orig[0], {".gguf"})
+update_folder_names_and_paths("unet_gguf", ["diffusion_models", "unet"])
+update_folder_names_and_paths("clip_gguf", ["text_encoders", "clip"])
 
 IMG_ARCH_LIST = {"flux", "sd1", "sdxl", "sd3", "aura", "ltxv", "hyvid"}
 TXT_ARCH_LIST = {"t5", "t5encoder", "llama"}
