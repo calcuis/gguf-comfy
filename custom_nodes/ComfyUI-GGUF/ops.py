@@ -5,9 +5,6 @@ from .dequant import dequantize_tensor, is_quantized
 from gguf_connector import reader as gr
 
 class GGMLTensor(torch.Tensor):
-    """
-    Main tensor-like class for storing quantized weights
-    """
     def __init__(self, *args, tensor_type, tensor_shape, patches=[], **kwargs):
         super().__init__()
         self.tensor_type = tensor_type
@@ -52,9 +49,6 @@ class GGMLTensor(torch.Tensor):
         return self.tensor_shape
 
 class GGMLLayer(torch.nn.Module):
-    """
-    This (should) be responsible for de-quantizing on the fly
-    """
     comfy_cast_weights = True
     dequant_dtype = None
     patch_dtype = None
@@ -166,9 +160,6 @@ class GGMLLayer(torch.nn.Module):
         raise NotImplementedError
 
 class GGMLOps(comfy.ops.manual_cast):
-    """
-    Dequantize weights on the fly before doing the compute
-    """
     class Linear(GGMLLayer, comfy.ops.manual_cast.Linear):
         def __init__(self, in_features, out_features, bias=True, device=None, dtype=None):
             torch.nn.Module.__init__(self)
