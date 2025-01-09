@@ -2,7 +2,7 @@ import torch
 import comfy.ops
 import comfy.model_management
 from .dequant import dequantize_tensor, is_quantized
-from gguf_connector import reader as gr
+from gguf_connector import reader as gr # call inner level function always
 
 class GGMLTensor(torch.Tensor):
     def __init__(self, *args, tensor_type, tensor_shape, patches=[], **kwargs):
