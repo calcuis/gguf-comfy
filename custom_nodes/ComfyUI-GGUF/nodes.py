@@ -26,7 +26,6 @@ update_folder_names_and_paths("clip_gguf", ["text_encoders", "clip"])
 # move to loader.py ### ############################################# ###
 # IMG_ARCH_LIST = {"flux", "sd1", "sdxl", "sd3", "aura", "ltxv", "hyvid"}
 # TXT_ARCH_LIST = {"t5", "t5encoder", "llama"}
-
 # def get_orig_shape(reader, tensor_name):
 #     field_key = f"comfy.gguf.orig_shape.{tensor_name}"
 #     field = reader.get_field(field_key)
@@ -35,16 +34,13 @@ update_folder_names_and_paths("clip_gguf", ["text_encoders", "clip"])
 #     if len(field.types) != 2 or field.types[0] != gr.GGUFValueType.ARRAY or field.types[1] != gr.GGUFValueType.INT32:
 #         raise TypeError(f"Bad original shape metadata for {field_key}: Expected ARRAY of INT32, got {field.types}")
 #     return torch.Size(tuple(int(field.parts[part_idx][0]) for part_idx in field.data))
-
 # def gguf_sd_loader(path, handle_prefix="model.diffusion_model.", return_arch=False):
 #     reader = gr.GGUFReader(path)
-
 #     has_prefix = False
 #     if handle_prefix is not None:
 #         prefix_len = len(handle_prefix)
 #         tensor_names = set(tensor.name for tensor in reader.tensors)
 #         has_prefix = any(s.startswith(handle_prefix) for s in tensor_names)
-
 #     tensors = []
 #     for tensor in reader.tensors:
 #         sd_key = tensor_name = tensor.name
@@ -53,7 +49,6 @@ update_folder_names_and_paths("clip_gguf", ["text_encoders", "clip"])
 #                 continue
 #             sd_key = tensor_name[prefix_len:]
 #         tensors.append((sd_key, tensor))
-
 #     compat = None
 #     arch_str = None
 #     arch_field = reader.get_field("general.architecture")
@@ -67,7 +62,6 @@ update_folder_names_and_paths("clip_gguf", ["text_encoders", "clip"])
 #         from .tools.convert import detect_arch
 #         arch_str = detect_arch(set(val[0] for val in tensors)).arch
 #         compat = "sd.cpp"
-
 #     state_dict = {}
 #     qtype_dict = {}
 #     for sd_key, tensor in tensors:
@@ -81,25 +75,20 @@ update_folder_names_and_paths("clip_gguf", ["text_encoders", "clip"])
 #                 if any([tensor_name.endswith(x) for x in (".proj_in.weight", ".proj_out.weight")]):
 #                     while len(shape) > 2 and shape[-1] == 1:
 #                         shape = shape[:-1]
-
 #         if tensor.tensor_type in {gr.GGMLQuantizationType.F32, gr.GGMLQuantizationType.F16}:
 #             torch_tensor = torch_tensor.view(*shape)
 #         state_dict[sd_key] = GGMLTensor(torch_tensor, tensor_type=tensor.tensor_type, tensor_shape=shape)
 #         qtype_dict[tensor_type_str] = qtype_dict.get(tensor_type_str, 0) + 1
-
 #     qsd = {k:v for k,v in state_dict.items() if is_quantized(v)}
 #     if len(qsd) > 0:
 #         max_key = max(qsd.keys(), key=lambda k: qsd[k].numel())
 #         state_dict[max_key].is_largest_weight = True
-
 #     print("\nggml_sd_loader:")
 #     for k,v in qtype_dict.items():
 #         print(f" {k:30}{v:3}")
-
 #     if return_arch:
 #         return (state_dict, arch_str)
 #     return state_dict
-
 # T5_SD_MAP = {
 #     "enc.": "encoder.",
 #     ".blk.": ".block.",
@@ -116,7 +105,6 @@ update_folder_names_and_paths("clip_gguf", ["text_encoders", "clip"])
 #     "ffn_gate": "layer.1.DenseReluDense.wi_0",
 #     "ffn_norm": "layer.1.layer_norm",
 # }
-
 # LLAMA_SD_MAP = {
 #     "blk.": "model.layers.",
 #     "attn_norm": "input_layernorm",
@@ -132,7 +120,6 @@ update_folder_names_and_paths("clip_gguf", ["text_encoders", "clip"])
 #     "output_norm": "model.norm",
 #     "output.weight": "lm_head.weight",
 # }
-
 # def sd_map_replace(raw_sd, key_map):
 #     sd = {}
 #     for k,v in raw_sd.items():
@@ -151,7 +138,6 @@ update_folder_names_and_paths("clip_gguf", ["text_encoders", "clip"])
 #             v.data = permute(v.data, n_head_kv)
 #         sd[k] = v
 #     return sd
-
 # def gguf_clip_loader(path):
 #     sd, arch = gguf_sd_loader(path, return_arch=True)
 #     if arch in {"t5", "t5encoder"}:
