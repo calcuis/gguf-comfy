@@ -1,8 +1,8 @@
 import torch
 from tqdm import tqdm
-from gguf_connector import reader as gr
-# import gguf_connector as ggc # call the inner level function instead; for better compatibility
-from .gguf_connector import quant as gq
+from gguf_connector import reader as gr # call inner level function better
+# import gguf_connector as ggc # call inner level function instead; for better compatibility
+from gguf_connector import quant as gq
 
 TORCH_COMPATIBLE_QTYPES = {None, gr.GGMLQuantizationType.F32, gr.GGMLQuantizationType.F16}
 
