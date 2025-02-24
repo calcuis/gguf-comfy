@@ -2,7 +2,15 @@ import torch
 import comfy.ops
 import comfy.model_management
 from .dequant import dequantize_tensor, is_quantized
-from gguf_connector import reader as gr # call inner level function always
+from gguf_connector import reader as gr
+
+if hasattr(torch, "compiler") and hasattr(torch.compiler, "disable"):
+    torch_compiler_disable = torch.compiler.disable
+else:
+    def torch_compiler_disable(*args, **kwargs):
+        def noop(x):
+            return x
+        return noop
 
 class GGMLTensor(torch.Tensor):
     def __init__(self, *args, tensor_type, tensor_shape, patches=[], **kwargs):
@@ -127,6 +135,7 @@ class GGMLLayer(torch.nn.Module):
                 weight = function(patch_list, weight, key, patch_dtype)
         return weight
 
+    @torch_compiler_disable()
     def cast_bias_weight(s, input=None, dtype=None, device=None, bias_dtype=None):
         if input is not None:
             if dtype is None:
