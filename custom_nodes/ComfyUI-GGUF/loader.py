@@ -3,7 +3,7 @@ from .ops import GGMLTensor
 from .dequant import is_quantized
 from gguf_connector import reader as gr
 
-IMG_ARCH_LIST = {"flux", "sd1", "sdxl", "sd3", "aura", "ltxv", "hyvid"}
+IMG_ARCH_LIST = {"flux", "sd1", "sdxl", "sd3", "aura", "ltxv", "hyvid", "wan"}
 TXT_ARCH_LIST = {"t5", "t5encoder", "llama"}
 
 def get_orig_shape(reader, tensor_name):
