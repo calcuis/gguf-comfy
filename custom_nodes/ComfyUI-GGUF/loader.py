@@ -15,12 +15,11 @@ def get_orig_shape(reader, tensor_name):
         raise TypeError(f"Bad original shape metadata for {field_key}: Expected ARRAY of INT32, got {field.types}")
     return torch.Size(tuple(int(field.parts[part_idx][0]) for part_idx in field.data))
 
-
 def get_string_field(reader, field_name):
     field = reader.get_field(field_name)
     if field is None:
         return None
-    if len(field.types) != 1 or field.types[0] != gguf.GGUFValueType.STRING:
+    if len(field.types) != 1 or field.types[0] != gr.GGUFValueType.STRING:
         raise TypeError(f"Bad type for GGUF general.architecture key: expected string, got {field.types!r}")
     return str(field.parts[field.data[-1]], encoding="utf-8")
 
